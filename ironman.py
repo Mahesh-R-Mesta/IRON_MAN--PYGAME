@@ -2,6 +2,7 @@ import pygame
 import os
 import random
 import time
+
 width=1000
 height=700
 pygame.font.init()
@@ -16,7 +17,7 @@ first_suit = [pygame.transform.scale(pygame.image.load(os.path.join("suit","fin1
 skys=pygame.transform.scale(pygame.image.load(os.path.join("img","sky.png")),(width,height-50))
 
 i_man =[pygame.transform.scale(pygame.image.load(os.path.join("irons","{}.png".format(i))),(150,150)) for i in range(1,14)]
-mask =[pygame.mask.from_surface(i_man[i]) for i in range(1,13)]
+
 
 bg=pygame.transform.scale(pygame.image.load(os.path.join("img","city.png")),(3557,height))
 
@@ -43,7 +44,10 @@ x_pos=10
 y_pos=height/2
 kill_com=False
 get_cor=[]
-
+Level=1
+Score=0
+label=pygame.font.SysFont("comicsan",35)
+levelsp=label.render("Level:{}".format(Level),1,(255,255,255))
 class velocity():
     def __init__(self,vel,maxi):
         self.vel=vel
@@ -63,6 +67,7 @@ down_vel = velocity(1,6)
 for_vel = velocity(1,6)
 back_vel = velocity(1,6)
 clock = pygame.time.Clock()
+
 class shoot():
     def __init__ (self,imgs,x,y,win):
         self.x=x
@@ -135,7 +140,7 @@ IRON_MAN = shoot(i_man[1],x_pos,y_pos,win) #Creating My Iron Man
 d1=counter(0,15)
 d2=counter(0,30)
 enemies=[]
-fps=60
+fps=100
 
 def updateall():
     pygame.display.update()
@@ -146,7 +151,11 @@ for suit in first_suit:
     win.blit(skys,(0,0))
     win.blit(surf,(0,height-200))
     win.blit(suit,(0,0))
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            break
     updateall()
+
 while run:
     clock.tick(fps)
     for event in pygame.event.get():
@@ -156,7 +165,7 @@ while run:
     win.blit(skys,(0,0))
     win.blit(bg,(-scr_x,0))
     i=i+1
-    if i >=13:
+    if i >=10:
         i=1
     keys =pygame.key.get_pressed()
     if keys[pygame.K_UP] and y_pos >=0:
@@ -188,12 +197,12 @@ while run:
         run=False
     d1.K+=1
     d2.K+=1
-    for fire1 in fires:
+    for fire1 in fires[:]:
         fire1.x+=8
         fire1.update()
         if fire1.x >=width:
             fires.remove(fire1)
-    if random.randrange(0,50) == 0:
+    if random.randrange(0, int((fps)/Level) ) == 0:
         enem=enemy(robo1,width+50,random.randrange(robo1.get_height(),height-robo1.get_height()),win)
         enemies.append(enem)
     for ene in enemies:
@@ -205,19 +214,24 @@ while run:
             Life-=1
         if ene.x < 0:
             enemies.remove(ene)
-        for fire1 in fires:
+        for fire1 in fires[:]:
             if collide(fire1,ene):
                 enemy_collide(ene)
                 enemies.remove(ene)
                 fires.remove(fire1)
-        if random.randrange(0,100)==0:
+                Score+=1
+        if random.randrange(0,fps*1)==0:
             ene_shoot = shoot(missile_fire,ene.x,ene.y+(robo1.get_height()/2),win)
             enemies_fire.append(ene_shoot)
     win.blit(logo,(10,10))
     kill_com=False
     IRON_MAN.update_myhero(i_man[i],x_pos,y_pos)
     LifeB(Life*10,win)
-    for ene_s in enemies_fire:
+    levelsp=label.render("Level:{}".format(Level),1,(255,255,255))
+    scores=label.render("Score:{}".format(Score),1,(255,255,255))
+    win.blit(scores,(logo.get_width()+150,15))
+    win.blit(levelsp,(20+logo.get_width(),10) )
+    for ene_s in enemies_fire[:]:
         ene_s.x-=8
         ene_s.update()
         if ene_s.x <=0:
@@ -232,5 +246,6 @@ while run:
     scr_x+=1
     if scr_x ==(3557+350):
         scr_x = -width
+        Level+=1
     updateall()
 pygame.quit()
