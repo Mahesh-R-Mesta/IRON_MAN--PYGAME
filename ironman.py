@@ -143,7 +143,7 @@ def updateall():
 surf=pygame.Surface((width,200))
 surf.fill((168,178,179))
 # --------amimation---------- 
-'''
+
 for suit in first_suit:
     clock.tick(10)
     win.blit(skys,(0,0))
@@ -153,7 +153,7 @@ for suit in first_suit:
         if event.type == pygame.QUIT:
             break
     updateall()
-'''
+
 
 #-------------------------------
 while run:
