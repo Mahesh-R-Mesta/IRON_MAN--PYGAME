@@ -24,15 +24,18 @@ bg=pygame.transform.scale(pygame.image.load(os.path.join("img","city.png")),(355
 robo1=pygame.transform.scale(pygame.image.load(os.path.join("img","robo2.png")),(70,80))
 mask_v1=pygame.mask.from_surface(robo1)
 
-robo2 = pygame.transform.scale(pygame.image.load(os.path.join("img","robo1.png")),(70,70))
-mask_v2 = pygame.mask.from_surface(robo2)
-
+robo2 = pygame.transform.scale(pygame.image.load(os.path.join("img","enemy2.png")),(100,100))
+enemy_2=[]
+robo2_fire =pygame.transform.scale(pygame.image.load(os.path.join("img","missile.png")),(30,30))
+ene2_fire=[]
+main_ene=0
 logo=pygame.transform.scale(pygame.image.load(os.path.join("img","logo.png")),(50,50))
 
 blast = pygame.transform.scale(pygame.image.load(os.path.join("img","fire2.ico")),(130,130))
 small_blast =pygame.transform.scale(pygame.image.load(os.path.join("img","fire2.ico")),(50,50))
 missile_fire = pygame.transform.scale(pygame.image.load(os.path.join("img","jet.png")),(50,20)) 
 kill_all = pygame.transform.scale(pygame.image.load(os.path.join("img","missile.png")),(50,50))
+
 enemies_fire=[]
 kill_all_missile=[]
 Life=10
@@ -114,38 +117,33 @@ def collide(obj1,obj2):
     y1=obj1.y - obj2.y
     return obj2.mask.overlap(obj1.mask,(x1,y1))!=None
     
-def guid_missile(x_m,y_m,x_e,y_e):
-    if (x_e>x_m):
-        x1=2
-    if (x_e<x_m):
-        x1=-2
-    if (y_e>y_m):
-        y1=+2
-    if (y_e<y_m):
-        y1=-2
-    if (y_e==y_m and y_e==y_m):
-        y1=0
-        x1=0
-    return x1,y1
-
 def enemy_collide(ene):
     ene.v_img=blast
     ene.y=ene.y-(robo1.get_height()/2)
     ene.x=ene.x-(robo1.get_width()/2)
     ene.update_e()
 
+def navic(enemyLoc,HeroLoc):
+    if (enemyLoc - HeroLoc)>0:
+        return  int(-1*(enemyLoc-HeroLoc)*((25.0+(11*Level))/(width-80)))
+    elif (HeroLoc-enemyLoc)>0:
+        return   int((HeroLoc-enemyLoc)*((25.0+(11*Level))/(width-80)))
+    elif (HeroLoc==enemyLoc):
+        return 0
 
 IRON_MAN = shoot(i_man[1],x_pos,y_pos,win) #Creating My Iron Man
 
 d1=counter(0,15)
 d2=counter(0,30)
 enemies=[]
-fps=100
+fps=60
 
 def updateall():
     pygame.display.update()
 surf=pygame.Surface((width,200))
 surf.fill((168,178,179))
+# --------amimation---------- 
+'''
 for suit in first_suit:
     clock.tick(10)
     win.blit(skys,(0,0))
@@ -155,7 +153,9 @@ for suit in first_suit:
         if event.type == pygame.QUIT:
             break
     updateall()
+'''
 
+#-------------------------------
 while run:
     clock.tick(fps)
     for event in pygame.event.get():
@@ -194,7 +194,11 @@ while run:
             kill_com=True
             d2.K=0
     if Life==0:
+        i_man[i]=blast
+        IRON_MAN.update()
         run=False
+        lab9=label.render("You Lost..Still Love you",1,(255,255,255))
+        win.blit(lab9,((width/2)-lab9.get_width()/2,height/2))
     d1.K+=1
     d2.K+=1
     for fire1 in fires[:]:
@@ -202,7 +206,7 @@ while run:
         fire1.update()
         if fire1.x >=width:
             fires.remove(fire1)
-    if random.randrange(0, int((fps)/Level) ) == 0:
+    if random.randrange(0, int((fps*2)/Level) ) == 0:
         enem=enemy(robo1,width+50,random.randrange(robo1.get_height(),height-robo1.get_height()),win)
         enemies.append(enem)
     for ene in enemies:
@@ -220,11 +224,48 @@ while run:
                 enemies.remove(ene)
                 fires.remove(fire1)
                 Score+=1
-        if random.randrange(0,fps*1)==0:
+            for e2 in enemy_2:
+                if collide(fire1,e2):
+                    e2.IMG=blast
+                    e2.update()
+                    enemy_2.remove(e2)
+                    fires.remove(fire1)
+        if random.randrange(0,fps*2)==0:
             ene_shoot = shoot(missile_fire,ene.x,ene.y+(robo1.get_height()/2),win)
             enemies_fire.append(ene_shoot)
+    if random.randrange(0,900)==0 and main_ene<3 and len(enemy_2)==0:
+        enemy_2.append(shoot(robo2,width,height-robo2.get_height(),win))
+        main_ene+=1
+        print("2nd Enemy IS COMMING")
+    for ene_2 in enemy_2[:]:
+        if ene_2.x > (width-100):
+            ene_2.x-=1
+        else:
+            if len(ene2_fire)==0:
+                ene2_fire.append(shoot(robo2_fire,ene_2.x,ene_2.y,win))
+        ene_2.update()
+    for fire_2 in ene2_fire:
+        fire_2.x-=9
+        fire_2.y+=navic(fire_2.y,IRON_MAN.y-30+i_man[1].get_height()/2)
+
+        if IRON_MAN.x-50 > fire_2.x:
+            fire_2.IMG=blast
+            fire_2.y-=blast.get_height()/2
+            fire_2.x-=blast.get_height()/2
+            fire_2.update()
+            ene2_fire.remove(fire_2)
+            
+        if collide(IRON_MAN,fire_2):
+            fire_2.IMG=blast
+            fire_2.update()
+            ene2_fire.remove(fire_2)
+            Life-=1
+
+        
+        fire_2.update()
     win.blit(logo,(10,10))
     kill_com=False
+    
     IRON_MAN.update_myhero(i_man[i],x_pos,y_pos)
     LifeB(Life*10,win)
     levelsp=label.render("Level:{}".format(Level),1,(255,255,255))
@@ -232,7 +273,7 @@ while run:
     win.blit(scores,(logo.get_width()+150,15))
     win.blit(levelsp,(20+logo.get_width(),10) )
     for ene_s in enemies_fire[:]:
-        ene_s.x-=8
+        ene_s.x-=7
         ene_s.update()
         if ene_s.x <=0:
             enemies_fire.remove(ene_s)
@@ -247,5 +288,6 @@ while run:
     if scr_x ==(3557+350):
         scr_x = -width
         Level+=1
+        main_ene=0
     updateall()
 pygame.quit()
